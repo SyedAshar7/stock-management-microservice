@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: stock-reservation-service
+  datasource:
+    url: jdbc:sqlserver://Syed;databasename=stage_stock_reservation_db;encrypt=true;trustServerCertificate=true
+    username: ${MY_SQL_SERVER_DB_USERNAME}
+    password: ${MY_SQL_SERVER_DB_PASSWORD
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+#  lombok:
+
