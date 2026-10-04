@@ -17,38 +17,62 @@ public class StockItem{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "sku")
+    @Column(name = "sku",
+            nullable = false,
+            unique = true,
+            length = 30)
     private String sku;
 
-    @Column(name = "product_name")
+    @Column(name = "product_name",
+            nullable = false,
+            length = 150)
     private String productName;
 
-    @Column(name = "category")
+    @Column(name = "category",
+            nullable = false,
+            length = 50)
     private String category;
 
-    @Column(name = "quantity_on_hand")
+    @Column(name = "quantity_on_hand",
+            nullable = false)
     private Integer quantityOnHand;
 
     @Column(name = "quantity_reserved")
     private Integer quantityReserved = 0;
 
-    @Column(name = "warehouse_location")
+    @Column(name = "warehouse_location",
+            nullable = false,
+            length = 50)
     private String warehouseLocation;
 
-    @Column(name = "unit_price")
+    @Column(name = "unit_price",
+            nullable = false,
+            scale = 2)
     private BigDecimal unitPrice;
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "lengthCm", column = @Column(name = "package_length_cm")),
-            @AttributeOverride(name = "widthCm", column = @Column(name = "package_width_cm")),
-            @AttributeOverride(name = "heightCm", column = @Column(name = "package_height_cm"))
+            @AttributeOverride(name = "lengthCm", column = @Column(
+                    name = "package_length_cm",
+                    nullable = false,
+                    scale = 2
+            )),
+            @AttributeOverride(name = "widthCm", column = @Column(
+                    name = "package_width_cm",
+                    nullable = false,
+                    scale = 2
+            )),
+            @AttributeOverride(name = "heightCm", column = @Column(
+                    name = "package_height_cm",
+                    nullable = false,
+                    scale = 2
+            ))
     })
     private PackageDimensions packageDimensions;
 
     @Column(name = "last_restocked_date")
     private LocalDate lastRestockedDate;
 
-    @Column(name = "active")
+    @Column(name = "active", nullable = false)
     private Boolean active;
 }
