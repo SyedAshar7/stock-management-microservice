@@ -185,7 +185,7 @@ public class StockItemServiceImpl implements StockItemService {
         StockItem stockItem = new StockItem();
 
         // Step 2: Set Fields
-        stockItem.setActive(true);
+        stockItem.setActive(createStockItemRequest.isActive());
         stockItem.setCategory(createStockItemRequest.getCategory());
         stockItem.setSku(createStockItemRequest.getSku());
         stockItem.setProductName(createStockItemRequest.getProductName());
@@ -218,6 +218,7 @@ public class StockItemServiceImpl implements StockItemService {
         response.setSku(stockItem.getSku());
         response.setProductName(stockItem.getProductName());
         response.setWarehouseLocation(stockItem.getWarehouseLocation());
+        response.setUnitPrice(stockItem.getUnitPrice());
 
         // Handle Quantities
         Integer onHand = stockItem.getQuantityOnHand();

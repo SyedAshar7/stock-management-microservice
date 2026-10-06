@@ -19,6 +19,9 @@ public class CreateStockItemRequest {
     @NotEmpty(message = "Category is required")
     private String category;
 
+    @NotNull(message = "Active status is required")
+    private boolean active;
+
     @NotNull(message = "Quantity in hand is required")
     @PositiveOrZero(message = "Quantity in hand must be positive or zero")
     private Integer quantityOnHand;
