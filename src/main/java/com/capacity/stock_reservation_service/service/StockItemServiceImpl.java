@@ -86,11 +86,16 @@ public class StockItemServiceImpl implements StockItemService {
                     ));
         }
 
-        if (minPrice != null || maxPrice != null){
+        if (minPrice != null ){
             spec = spec.and(
-                    StockItemSpecification.priceBetween(
-                            minPrice
-                            , maxPrice));
+                    StockItemSpecification.priceGreaterThanOrEqualTo(
+                            minPrice));
+        }
+
+        if (maxPrice != null ){
+            spec = spec.and(
+                    StockItemSpecification.priceLessThanOrEqualTo(
+                            maxPrice));
         }
 
         if (minQuantityAvailable != null) {
@@ -186,7 +191,6 @@ public class StockItemServiceImpl implements StockItemService {
         stockItem.setProductName(createStockItemRequest.getProductName());
         stockItem.setQuantityOnHand(createStockItemRequest.getQuantityOnHand());
         stockItem.setWarehouseLocation(createStockItemRequest.getWarehouseLocation());
-        stockItem.setCategory(createStockItemRequest.getCategory());
         stockItem.setUnitPrice(createStockItemRequest.getUnitPrice());
 
         // Step 3: Handle Data with format difference

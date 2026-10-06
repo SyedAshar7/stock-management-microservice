@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/stock-item")
+@RequestMapping("/api/stock-items")
 public class StockItemController {
 
     private final StockItemService stockItemService;

@@ -20,8 +20,14 @@ public class StockItemSpecification {
         return (root, query, cb) -> cb.equal(root.get("active"), active);
     }
 
-    public static Specification<StockItem> priceBetween(BigDecimal minPrice, BigDecimal maxPrice) {
-        return (root, query, cb) -> cb.between(root.<BigDecimal>get("unitPrice"), minPrice, maxPrice);
+    public static Specification<StockItem> priceGreaterThanOrEqualTo (BigDecimal minPrice) {
+        return (root, query, cb) ->
+                cb.greaterThanOrEqualTo(root.<BigDecimal>get("unitPrice"), minPrice);
+    }
+
+    public static Specification<StockItem> priceLessThanOrEqualTo (BigDecimal maxPrice) {
+        return (root, query, cb) ->
+                cb.lessThanOrEqualTo(root.<BigDecimal>get("unitPrice"), maxPrice);
     }
 
     public static Specification<StockItem> hasMinimumQuantityAvailable(int quantity) {
