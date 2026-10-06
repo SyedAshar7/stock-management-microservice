@@ -2,6 +2,7 @@ package com.capacity.stock_reservation_service.controller;
 
 import com.capacity.stock_reservation_service.dto.ApiResponse;
 import com.capacity.stock_reservation_service.exception.DuplicateSkuException;
+import com.capacity.stock_reservation_service.exception.InsufficientStockException;
 import com.capacity.stock_reservation_service.exception.StockItemNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,7 +46,20 @@ public class BaseController {
         );
     }
 
-    // 3. To handle exception when stock item already exists (HTTP 404)
+    // 3. To handle Insufficient Stock Exception  (HTTP 409)
+    @ExceptionHandler(InsufficientStockException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void> handleInsufficientStockException(InsufficientStockException e) {
+
+        return new ApiResponse<>(
+          false,
+          e.getMessage(),
+          null,
+          LocalDateTime.now()
+        );
+    }
+
+    // 4. To handle exception when stock item already exists (HTTP 404)
     @ExceptionHandler(StockItemNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNotFoundException(StockItemNotFoundException e) {
@@ -58,7 +72,7 @@ public class BaseController {
         );
     }
 
-    // 4. Catch-All for Unexpected Server Errors (HTTP 500)
+    // 5. Catch-All for Unexpected Server Errors (HTTP 500)
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleGeneric(Exception e) {
