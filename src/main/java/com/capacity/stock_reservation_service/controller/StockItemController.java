@@ -4,7 +4,6 @@ import com.capacity.stock_reservation_service.dto.*;
 import com.capacity.stock_reservation_service.service.StockItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
