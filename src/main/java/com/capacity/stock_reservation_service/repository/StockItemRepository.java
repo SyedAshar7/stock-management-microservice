@@ -6,5 +6,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 
 public interface StockItemRepository extends JpaRepository<StockItem, Long>, JpaSpecificationExecutor<StockItem> {
+
     StockItem findBySku(String sku);
+
+    boolean existsBySku(String sku);
+
 }
