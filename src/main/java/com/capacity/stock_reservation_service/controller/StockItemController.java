@@ -20,13 +20,13 @@ public class StockItemController {
     @PostMapping
     public ApiResponse<StockItemResponse> create(@RequestBody @Valid CreateStockItemRequest request){
         StockItemResponse response = stockItemService.create(request);
-        return new ApiResponse<>(HttpStatus.CREATED.value(), "Added Stock Item", response);
+        return new ApiResponse<>(true, "Added Stock Item", response, null);
     }
 
     @GetMapping("/{sku}")
     public ApiResponse<StockItemResponse> getBySku(@PathVariable String sku){
         StockItemResponse data = stockItemService.getBySku(sku);
-        return new ApiResponse<>(HttpStatus.OK.value(), "Fetched Stock Item", data);
+        return new ApiResponse<>(true, "Fetched Stock Item", data, null);
     }
 
     @GetMapping
@@ -48,9 +48,11 @@ public class StockItemController {
         );
 
         return new ApiResponse<>(
-                HttpStatus.OK.value(),
+                true,
                 "Search completed",
-                data);
+                data,
+                null
+        );
     }
 
     @PutMapping("/{sku}/reserve")
@@ -59,9 +61,10 @@ public class StockItemController {
             @RequestBody ReserveStockRequest request){
         StockItemResponse data = stockItemService.reserve(sku, request);
         return new ApiResponse<>(
-                HttpStatus.OK.value(),
+                true,
                 "Reserved Stock",
-                data
+                data,
+                null
         );
     }
 
@@ -73,9 +76,10 @@ public class StockItemController {
         StockItemResponse data = stockItemService.patch(sku, request);
 
         return new ApiResponse<>(
-                HttpStatus.OK.value(),
+                true,
                 "Updated stock",
-                data
+                data,
+                null
         );
     }
 }
