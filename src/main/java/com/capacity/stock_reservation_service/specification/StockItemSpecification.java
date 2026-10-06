@@ -24,11 +24,12 @@ public class StockItemSpecification {
         return (root, query, cb) -> cb.between(root.<BigDecimal>get("unitPrice"), minPrice, maxPrice);
     }
 
-    // TO DO : Fix the filter to fetch this correctly
-//    public static Specification<StockItem> hasMinimumQuantityAvailable (int quantity) {
-//
-//        int available quantity
-//        return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(
-//                root.get("quantity_on_hand") - root.get("reservedQuantity"), quantity);
-//    }
+    public static Specification<StockItem> hasMinimumQuantityAvailable(int quantity) {
+        return (root, query, cb) ->
+                cb.greaterThanOrEqualTo(
+                        cb.diff(root.get("quantityOnHand"),
+                                root.get("quantityReserved")
+                        ),
+                        quantity);
+    }
 }

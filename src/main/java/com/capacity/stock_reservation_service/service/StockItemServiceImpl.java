@@ -93,23 +93,15 @@ public class StockItemServiceImpl implements StockItemService {
                             , maxPrice));
         }
 
-        // TO DO : Fix the filter to fetch this correctly
-//        if (minQuantityAvailable != null) {
-//            spec = spec.and(
-//                    StockItemSpecification.hasMinimumQuantityAvailable(
-//                            minQuantityAvailable
-//                    )
-//            );
-//        }
-
-        List<StockItem> result = repository.findAll(spec);
-
-        // TO DO: Update logic to pass in the filters as well to the exception handler
-        if (result.isEmpty()) {
-            throw new StockItemNotFoundException(
-                    "Stock Item not found for the filters"
+        if (minQuantityAvailable != null) {
+            spec = spec.and(
+                    StockItemSpecification.hasMinimumQuantityAvailable(
+                            minQuantityAvailable
+                    )
             );
         }
+
+        List<StockItem> result = repository.findAll(spec);
 
         return result
                 .stream()
@@ -118,7 +110,9 @@ public class StockItemServiceImpl implements StockItemService {
     }
 
     @Override
-    public StockItemResponse reserve(String sku, ReserveStockRequest request) {
+    public StockItemResponse reserve(
+            String sku,
+            ReserveStockRequest request) {
 
         StockItem stockItem = repository.findBySku(sku);
 
