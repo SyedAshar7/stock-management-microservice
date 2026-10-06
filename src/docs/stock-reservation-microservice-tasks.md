@@ -137,3 +137,4 @@ Tie the service together with consistent error responses and round out the API w
 - Business logic is deliberately thin throughout (a couple of `if` checks) — the point of each task is the Spring/JPA plumbing around it, not complex domain rules.
 - No JPQL or native queries anywhere — all dynamic querying goes through Specifications (Task 3).
 - No repository/service tests are specified here; add them if you want extra practice, but they're not required to hit the listed concepts.
+  -Dide.browser.jcef.out-of-process.enabled=false
