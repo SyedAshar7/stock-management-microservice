@@ -1,198 +1,46 @@
 # Warehouse Stock Reservation Microservice
 
-A single bounded-context Spring Boot microservice designed for mid-size logistics and warehouse stock management. This service provides a clean, layered RESTful API for onboarding SKUs, fetching inventory items, executing dynamic spec-based search queries, reserving stock against incoming orders, restocking inventory, and deactivating discontinued SKUs.
+A Spring Boot microservice for warehouse stock management. It supports onboarding SKUs, searching inventory via dynamic filters, reserving stock for orders, restocking items, and deactivating discontinued SKUs.
 
----
+## Architecture & Layers
 
-## 🏛️ Architectural Overview & Layering
+The project uses a standard layered Spring Boot architecture:
 
-The microservice strictly enforces a **N-Tier Layered Architecture** with unidirectional data flow and strong separation of concerns.
+- **Controller (`controller/`)**: Exposes REST endpoints (`/api/stock-items`), validates requests using `@Valid`, and delegates business operations to the service layer. `BaseController.java` handles global exceptions via `@RestControllerAdvice`.
+- **Service (`service/`)**: Implements business logic (SKU uniqueness checks, availability calculations, stock reservation, restocking, and DTO/entity mapping).
+- **Repository & Specification (`repository/`, `specification/`)**: Data persistence using Spring Data JPA. `StockItemSpecification.java` builds dynamic search filters using the JPA Criteria API.
+- **Domain & Embeddable (`model/`, `embeddable/`)**: `StockItem` JPA entity mapped to table `stock_item`, embedding `PackageDimensions` via `@Embedded`.
 
-```
-                  ┌─────────────────────────────────────────┐
-                  │              HTTP Client                │
-                  └────────────────────┬────────────────────┘
-                                       │ Request / Response (JSON)
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ CONTROLLER LAYER                                                            │
-│ • StockItemController (@RestController)                                     │
-│ • BaseController (@RestControllerAdvice for Global Exception Handling)       │
-│ • Triggers DTO Validation (@Valid)                                          │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ Transfer DTOs
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ SERVICE LAYER                                                               │
-│ • StockItemService (Interface) & StockItemServiceImpl (Implementation)      │
-│ • Implements domain business rules (e.g. available = onHand - reserved)    │
-│ • Maps DTOs ⟷ Entities & orchestrates specifications                         │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ Domain Entities (StockItem)
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ REPOSITORY & SPECIFICATION LAYER                                           │
-│ • StockItemRepository (JpaRepository + JpaSpecificationExecutor)           │
-│ • StockItemSpecification (JPA Criteria API builder)                        │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ SQL Queries / JDBC
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ DATABASE                                                                    │
-│ • MS SQL Server / Relational Database (`stock_item` table)                  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## Layer Communication (DTOs vs Entities)
 
-### 1. Controller Layer ([`controller/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/controller/))
-* **[`StockItemController.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/controller/StockItemController.java):** Exposes RESTful HTTP endpoints (`/api/stock-items`). Delegates execution directly to the service layer and returns wrapped standard response envelopes (`ApiResponse<T>`).
-* **[`BaseController.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/controller/BaseController.java):** Annotated with `@RestControllerAdvice`. Intercepts service-level exceptions (`DuplicateSkuException`, `StockItemNotFoundException`, `InsufficientStockException`, `MethodArgumentNotValidException`) and maps them to HTTP status codes (`400`, `404`, `409`, `500`).
+API clients interact exclusively through DTOs to separate the external HTTP API contract from database entities:
 
-### 2. Service Layer ([`service/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/service/))
-* **[`StockItemService.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/service/StockItemService.java) & [`StockItemServiceImpl.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/service/StockItemServiceImpl.java):** Houses core business logic. Enforces SKU uniqueness, computes available quantities (`quantityOnHand - quantityReserved`), validates reservation limits, manages partial updates, and handles mapping between DTOs and persistent JPA entities.
+- **Inbound DTOs**: `CreateStockItemRequest`, `ReserveStockRequest`, and `StockItemPatchRequest` handle request validation (`@NotEmpty`, `@Positive`, etc.).
+- **Outbound DTO**: `StockItemResponse` maps output fields using `@JsonProperty` (with `quantity_available` computed dynamically).
+- **Response Envelope**: `ApiResponse<T>` wraps success and error responses into a consistent JSON envelope (`success`, `message`, `data`, `timestamp`).
 
-### 3. Repository & Specification Layer ([`repository/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/repository/), [`specification/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/specification/))
-* **[`StockItemRepository.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/repository/StockItemRepository.java):** Spring Data JPA interface extending both `JpaRepository` and `JpaSpecificationExecutor`.
-* **[`StockItemSpecification.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/specification/StockItemSpecification.java):** Employs the **JPA Criteria API** to build type-safe, programmatic search specifications.
+## Technologies Used
 
-### 4. Domain & Embeddable Model ([`model/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/model/), [`embeddable/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/embeddable/))
-* **[`StockItem.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/model/StockItem.java):** The JPA `@Entity` mapped to `stock_item`.
-* **[`PackageDimensions.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/embeddable/PackageDimensions.java):** A reusable `@Embeddable` Value Object embedded into `StockItem` via `@Embedded` and mapped column attributes (`lengthCm`, `widthCm`, `heightCm`).
+- **Spring Boot 3.x** (Spring Web, Spring Data JPA, Validation)
+- **Hibernate / Relational DB** (MS SQL Server)
+- **JPA Criteria API** (Dynamic search via `JpaSpecificationExecutor`)
+- **Jackson** (JSON property serialization and formatting)
+- **Lombok** (Boilerplate getter/setter and constructor generation)
 
----
+## API Endpoints
 
-## 🔄 Layer Communication Protocol: DTOs vs. Entities
+| Method | Path | Description | Sample Request |
+|---|---|---|---|
+| POST | `/api/stock-items` | Onboard a new SKU | `{"sku": "SKU-101", "productName": "Motor", "category": "HARDWARE", "quantityOnHand": 50, "warehouseLocation": "A-1", "unitPrice": 199.99, "packageLengthCm": 30, "packageWidthCm": 20, "packageHeightCm": 15}` |
+| GET | `/api/stock-items/{sku}` | Fetch item by SKU | N/A |
+| GET | `/api/stock-items` | Filter inventory (`category`, `warehouseLocation`, `active`, `minPrice`, `maxPrice`, `minQuantityAvailable`) | Query: `?category=HARDWARE&minPrice=100` |
+| PUT | `/api/stock-items/{sku}/reserve` | Reserve stock quantity | `{"quantity": 5}` |
+| PATCH | `/api/stock-items/{sku}` | Partial update (restock, price, location, active) | `{"quantity_on_hand": 100, "active": false}` |
 
-To prevent tight coupling between DB schema models and API clients, domain entities are strictly confined to the persistence and service layers. External callers interact exclusively through **Data Transfer Objects (DTOs)**.
+## Running Locally
 
-```
-[ HTTP Payload (JSON) ]
-          │
-          ▼
-┌──────────────────┐
-│   Inbound DTO    │  e.g. CreateStockItemRequest, ReserveStockRequest, StockItemPatchRequest
-└────────┬─────────┘  (Validated via @Valid & Jakarta Validation)
-         │
-         │ Service Layer Conversion (createRequestToEntity)
-         ▼
-┌──────────────────┐
-│   JPA Entity     │  StockItem + PackageDimensions (@Embedded)
-└────────┬─────────┘  (Saved to Database)
-         │
-         │ Service Layer Conversion (toResponse)
-         ▼
-┌──────────────────┐
-│   Outbound DTO   │  StockItemResponse
-└────────┬─────────┘  (Renamed fields via Jackson @JsonProperty)
-         │
-         ▼
-[ ApiResponse<T> Generic Envelope ]
-```
-
-### 1. Inbound Request DTOs ([`dto/`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/))
-- **[`CreateStockItemRequest.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/CreateStockItemRequest.java):** Enforces mandatory creation contracts using annotations like `@NotEmpty`, `@NotNull`, `@Positive`, and `@PositiveOrZero`.
-- **[`ReserveStockRequest.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/ReserveStockRequest.java):** Captures reservation requests with `@Positive` quantity validation.
-- **[`StockItemPatchRequest.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/StockItemPatchRequest.java):** Represents partial field updates (restocking, price change, location update, SKU deactivation).
-
-### 2. Outbound Response DTO
-- **[`StockItemResponse.java`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/StockItemResponse.java):** Decouples internal database column names from external JSON contracts. Computed fields like `quantity_available` (`onHand - reserved`) are calculated dynamically before serialization.
-
-### 3. Standard Unified API Envelope
-- **[`ApiResponse<T>`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/java/com/capacity/stock_reservation_service/dto/ApiResponse.java):** Wraps all success and failure HTTP responses into a consistent JSON envelope:
-  ```json
-  {
-    "success": true,
-    "message": "Reserved Stock",
-    "data": { ... },
-    "timestamp": "2026-10-07T02:18:31"
-  }
-  ```
-
----
-
-## 🛠️ Frameworks, Libraries & Tools Used
-
-| Tool / Framework | Role & Purpose | Key Annotations / Usage |
-| :--- | :--- | :--- |
-| **Spring Boot 3.x** | Core application framework providing Web MVC, IoC Container, and Dependency Injection. | `@RestController`, `@Service`, `@RequiredArgsConstructor` |
-| **Spring Data JPA & Hibernate** | Object-Relational Mapping (ORM) and data access abstraction over MS SQL Server. | `@Entity`, `@Table`, `@Id`, `@Column`, `@Embedded`, `@Embeddable` |
-| **JPA Criteria API & Specifications** | Dynamic, type-safe programmatically built database queries without native SQL strings. | `JpaSpecificationExecutor`, `Specification<StockItem>`, `CriteriaBuilder.diff()` |
-| **Jackson (`com.fasterxml.jackson`)** | Custom JSON serialization, field renaming, and ignore unknown properties. | `@JsonProperty("warehouse_name")`, `@JsonIgnoreProperties` |
-| **Jakarta Validation (Hibernate Validator)** | Declarative REST input contract validation. | `@Valid`, `@NotEmpty`, `@NotNull`, `@Positive`, `@PositiveOrZero` |
-| **Lombok** | Boilerplate code reduction for getters, setters, constructors, and builders. | `@Data`, `@RequiredArgsConstructor`, `@NoArgsConstructor` |
-
----
-
-## 🔍 JPA Criteria API Specifications Deep Dive
-
-Rather than creating combinatorial repository queries (`findByCategoryAndWarehouseLocationAndUnitPriceGreaterThan...`), dynamic inventory searching utilizes **Spring Data JPA Specifications**:
-
-```java
-// StockItemSpecification.java
-public static Specification<StockItem> hasMinimumQuantityAvailable(int quantity) {
-    return (root, query, cb) ->
-            cb.greaterThanOrEqualTo(
-                    cb.diff(root.get("quantityOnHand"), root.get("quantityReserved")),
-                    quantity
-            );
-}
-```
-
-In `StockItemServiceImpl`, query parameters are composed conditionally at runtime:
-
-```java
-Specification<StockItem> spec = (root, query, cb) -> cb.conjunction();
-
-if (category != null) spec = spec.and(StockItemSpecification.hasCategory(category));
-if (minPrice != null) spec = spec.and(StockItemSpecification.priceGreaterThanOrEqualTo(minPrice));
-if (maxPrice != null) spec = spec.and(StockItemSpecification.priceLessThanOrEqualTo(maxPrice));
-if (minQuantityAvailable != null) spec = spec.and(StockItemSpecification.hasMinimumQuantityAvailable(minQuantityAvailable));
-
-List<StockItem> results = repository.findAll(spec);
-```
-
----
-
-## 🌐 API Endpoints Reference
-
-| # | Method | Path | Description | Sample Request Payload |
-|---|--------|-------------------------------|----------------------------------|------------------------|
-| 1 | `POST` | `/api/stock-items` | Onboard a new SKU | `{"sku": "SKU-101", "productName": "Motor", "category": "AUTOMATION", "quantityOnHand": 50, "warehouseLocation": "W-1", "unitPrice": 199.99, "packageLengthCm": 30, "packageWidthCm": 20, "packageHeightCm": 15}` |
-| 2 | `GET` | `/api/stock-items/{sku}` | Fetch a single stock item by SKU | N/A |
-| 3 | `GET` | `/api/stock-items` | Dynamic search/filter (`category`, `warehouseLocation`, `active`, `minPrice`, `maxPrice`, `minQuantityAvailable`) | Query Params: `?category=AUTOMATION&minPrice=100&minQuantityAvailable=10` |
-| 4 | `PUT` | `/api/stock-items/{sku}/reserve` | Reserve stock against an order | `{"quantity": 5}` |
-| 5 | `PATCH` | `/api/stock-items/{sku}` | Partial update (restock, price, location, or `active=false`) | `{"quantity_on_hand": 100, "unit_price": 249.99, "active": false}` |
-
----
-
-## 🚀 Running the Project Locally
-
-### Prerequisites
-* **Java 17+**
-* **Maven 3.8+**
-* **MS SQL Server / SSMS**
-
-### Application Configuration ([`application.yaml`](file:///d:/Learn/Spring%20Boot/Exercises/web/microservice-app/stock-reservation-service/src/main/resources/application.yaml))
-Ensure database credentials are configured via environment variables or direct local values:
-```yaml
-server:
-  port: 8080
-
-spring:
-  datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=stock_db;encrypt=false;trustServerCertificate=true
-    username: ${MY_SQL_SERVER_DB_USERNAME:sa}
-    password: ${MY_SQL_SERVER_DB_PASSWORD:YourPassword123!}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-```
-
-### Build & Run
-```bash
-# Build project
-./mvnw clean package
-
-# Run application
-./mvnw spring-boot:run
-```
+1. Configure database connection credentials in `src/main/resources/application.yaml`.
+2. Build and start the service:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
