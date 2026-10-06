@@ -57,7 +57,7 @@ public class StockItemController {
     @PutMapping("/{sku}/reserve")
     public ApiResponse<StockItemResponse> reserve(
             @PathVariable String sku,
-            @RequestBody ReserveStockRequest request){
+            @Valid @RequestBody ReserveStockRequest request){
         StockItemResponse data = stockItemService.reserve(sku, request);
         return new ApiResponse<>(
                 true,
@@ -70,7 +70,7 @@ public class StockItemController {
     @PatchMapping("/{sku}")
     public ApiResponse<StockItemResponse> update(
             @PathVariable String sku,
-            @RequestBody StockItemPatchRequest request
+            @Valid @RequestBody StockItemPatchRequest request
     ){
         StockItemResponse data = stockItemService.patch(sku, request);
 
