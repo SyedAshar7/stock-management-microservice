@@ -17,25 +17,53 @@ public class StockItemController {
     private final StockItemService stockItemService;
 
     @PostMapping
-    public ApiResponse<StockItemResponse> create(@RequestBody @Valid CreateStockItemRequest request){
+    public ApiResponse<StockItemResponse> create(
+            @RequestBody
+            @Valid
+            CreateStockItemRequest request
+    ){
         StockItemResponse response = stockItemService.create(request);
-        return new ApiResponse<>(true, "Added Stock Item", response, null);
+        return new ApiResponse<>(
+                true,
+                "Added Stock Item",
+                response,
+                null
+        );
     }
 
     @GetMapping("/{sku}")
-    public ApiResponse<StockItemResponse> getBySku(@PathVariable String sku){
+    public ApiResponse<StockItemResponse> getBySku(
+            @PathVariable
+            String sku
+    ){
         StockItemResponse data = stockItemService.getBySku(sku);
-        return new ApiResponse<>(true, "Fetched Stock Item", data, null);
+        return new ApiResponse<>(
+                true,
+                "Fetched Stock Item",
+                data,
+                null
+        );
     }
 
     @GetMapping
     public ApiResponse<List<StockItemResponse>> search(
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) String warehouseLocation,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) Integer minQuantityAvailable
+            @RequestParam(required = false)
+            BigDecimal minPrice,
+
+            @RequestParam(required = false)
+            BigDecimal maxPrice,
+
+            @RequestParam(required = false)
+            String warehouseLocation,
+
+            @RequestParam(required = false)
+            String category,
+
+            @RequestParam(required = false)
+            Boolean active,
+
+            @RequestParam(required = false)
+            Integer minQuantityAvailable
             ){
         List<StockItemResponse> data = stockItemService.search(
                 category,
@@ -56,8 +84,13 @@ public class StockItemController {
 
     @PutMapping("/{sku}/reserve")
     public ApiResponse<StockItemResponse> reserve(
-            @PathVariable String sku,
-            @Valid @RequestBody ReserveStockRequest request){
+            @PathVariable
+            String sku,
+
+            @Valid
+            @RequestBody
+            ReserveStockRequest request
+    ){
         StockItemResponse data = stockItemService.reserve(sku, request);
         return new ApiResponse<>(
                 true,
@@ -69,8 +102,12 @@ public class StockItemController {
 
     @PatchMapping("/{sku}")
     public ApiResponse<StockItemResponse> update(
-            @PathVariable String sku,
-            @Valid @RequestBody StockItemPatchRequest request
+            @PathVariable
+            String sku,
+
+            @Valid
+            @RequestBody
+            StockItemPatchRequest request
     ){
         StockItemResponse data = stockItemService.patch(sku, request);
 
